@@ -3,6 +3,8 @@
  */
 package com.allendowney.thinkdast;
 
+import static org.hamcrest.CoreMatchers.nullValue;
+
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashSet;
@@ -10,6 +12,8 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.math3.ode.sampling.NordsieckStepInterpolator;
 
 /**
  * Implementation of a Map using a binary search tree.
@@ -70,7 +74,24 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 		// something to make the compiler happy
 		@SuppressWarnings("unchecked")
 		Comparable<? super K> k = (Comparable<? super K>) target;
-
+	
+		
+		
+		Node node = root; 
+		while(node != null) {
+			// k가 작으면 음수.
+			int com = k.compareTo(node.key);
+			
+			if(com < 0) {
+				node = node.left;
+			} else if (com > 0 ) {
+				node =node.right;
+			} else {
+				return node;
+			}
+			
+			
+		}
 		// TODO: FILL THIS IN!
 		return null;
 	}
@@ -89,6 +110,7 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 		return target.equals(obj);
 	}
 
+	//모든 노드를 검색해야한다.
 	@Override
 	public boolean containsValue(Object target) {
 		return containsValueHelper(root, target);
@@ -96,6 +118,21 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 
 	private boolean containsValueHelper(Node node, Object target) {
 		// TODO: FILL THIS IN!
+		if(node == null) 
+			return false;
+		
+		if(node.value == target) {
+			return true;
+		}
+
+		if(containsValueHelper(node.left, target)) {
+			return true;
+		}
+		
+		if(containsValueHelper(node.right, target)) {
+			return true;
+		}
+		
 		return false;
 	}
 
@@ -120,10 +157,38 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 
 	@Override
 	public Set<K> keySet() {
+		//일련의 키들을 반환 탐색 BFS나 DFS로
 		Set<K> set = new LinkedHashSet<K>();
 		// TODO: FILL THIS IN!
+		addInOrder(root, set);
 		return set;
 	}
+	
+	public void addInOrder(Node node,Set<K> set) {
+		
+		if(node==null) return;
+		addInOrder(node.left,set);
+		set.add(node.key);
+		addInOrder(node.right, set);
+		
+	}
+	
+	//dfs는 연습용으로 만들었음.
+	public LinkedHashSet<K> dfs() {
+		Set<K> set = new LinkedHashSet<K>();
+		dfsR(root,set);
+//		System.out.println(set.size());
+		return (LinkedHashSet<K>) set;
+	}
+	
+	public void dfsR(Node node,Set<K> set) {
+		if(node != null ) {
+		set.add(node.key);
+		dfsR(node.left,set);
+		dfsR(node.right,set);
+		}
+	}
+	
 
 	@Override
 	public V put(K key, V value) {
@@ -140,7 +205,38 @@ public class MyTreeMap<K, V> implements Map<K, V> {
 
 	private V putHelper(Node node, K key, V value) {
 		// TODO: FILL THIS IN!
-		return null;
+		// 어디에 넣을것인지? 루트부터 탐색해서 value 위치를 찾는다.
+		@SuppressWarnings("unchecked")
+		Comparable<? super K> k = (Comparable<? super K>) key;
+		// 음수면 k가 작은 것임.
+		int com = k.compareTo(node.key);
+		
+		// 왼쪽으로 탐색
+		if(com < 0) {
+			if(node.left == null) {
+				node.left = new Node(key, value);
+				size++;
+				return null;
+			} else {
+			putHelper(node.left, key, value);
+			}
+		} else if ( com > 0) {
+			if(node.right == null) {
+				node.right = new Node(key, value);
+				size++;
+				return null;
+			}
+			putHelper(node.right, key, value);
+		}
+		
+		
+			V oldValue = node.value;
+			node.key = key;
+			node.value = value;
+			return oldValue;
+		
+		
+		
 	}
 
 	@Override
